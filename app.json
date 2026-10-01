@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "AI Reel Maker",
+    "slug": "ai-reel-maker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "ai-reel-maker",
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-splash-screen"
+    ]
+  }
+}

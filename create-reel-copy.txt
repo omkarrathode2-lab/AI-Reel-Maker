@@ -1,0 +1,721 @@
+import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+type OptionButtonProps = {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+};
+
+type StepProps = {
+  icon: string;
+  title: string;
+  done: boolean;
+};
+
+export default function CreateReelScreen() {
+  const params = useLocalSearchParams();
+
+  const [idea, setIdea] = useState(
+    typeof params.idea === "string" ? params.idea : ""
+  );
+
+  const [style, setStyle] = useState("Motivational");
+  const [duration, setDuration] = useState("30 sec");
+  const [format, setFormat] = useState("9:16");
+  const [language, setLanguage] = useState("Hindi");
+  const [voice, setVoice] = useState("Male");
+  const [music, setMusic] = useState("Emotional");
+  const [captions, setCaptions] = useState(true);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [completed, setCompleted] = useState(false);
+  const [generatedScript, setGeneratedScript] = useState("");
+
+  const createReel = async () => {
+    if (!idea.trim() || isGenerating) {
+      return;
+    }
+
+    setIsGenerating(true);
+    setCompleted(false);
+    setGeneratedScript("");
+    setProgress(10);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 90000);
+
+    try {
+      setProgress(20);
+
+      const response = await fetch(
+        "http://127.0.0.1:3001/api/generate-script",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            idea: idea.trim(),
+            style,
+            duration,
+            language,
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      setProgress(80);
+
+      let data: {
+        success?: boolean;
+        script?: string;
+        error?: string;
+      };
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(
+          "Backend returned an invalid response. Make sure the backend is running."
+        );
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error || "Script generation failed."
+        );
+      }
+
+      if (!data.script || typeof data.script !== "string") {
+        throw new Error("Gemini returned an empty script.");
+      }
+
+      setGeneratedScript(data.script.trim());
+      setProgress(100);
+      setCompleted(true);
+    } catch (error) {
+      console.error("Create Reel error:", error);
+
+      setProgress(0);
+      setCompleted(false);
+
+      if (error instanceof Error && error.name === "AbortError") {
+        Alert.alert(
+          "Generation Timeout",
+          "AI script generation took too long. Make sure the backend is running and try again."
+        );
+      } else {
+        Alert.alert(
+          "Generation Failed",
+          error instanceof Error
+            ? error.message
+            : "Failed to generate reel script."
+        );
+      }
+    } finally {
+      clearTimeout(timeout);
+      setIsGenerating(false);
+    }
+  };
+
+  const openPreview = () => {
+    router.push({
+      pathname: "/ai-voice",
+      params: {
+        idea: idea.trim(),
+        style,
+        duration,
+        format,
+        language,
+        voice,
+        music,
+        captions: captions ? "ON" : "OFF",
+        script: generatedScript,
+      },
+    });
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          disabled={isGenerating}
+        >
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.title}>Create New Reel</Text>
+
+        <Text style={styles.subtitle}>
+          One idea. One button. Complete AI reel.
+        </Text>
+
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>💡 Your Idea</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Describe the reel you want to create..."
+            placeholderTextColor="#777777"
+            value={idea}
+            onChangeText={setIdea}
+            multiline
+            editable={!isGenerating}
+          />
+
+          <Text style={styles.sectionTitle}>🎬 Style</Text>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="Cinematic"
+              selected={style === "Cinematic"}
+              onPress={() => setStyle("Cinematic")}
+            />
+
+            <OptionButton
+              label="Motivational"
+              selected={style === "Motivational"}
+              onPress={() => setStyle("Motivational")}
+            />
+          </View>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="Funny"
+              selected={style === "Funny"}
+              onPress={() => setStyle("Funny")}
+            />
+
+            <OptionButton
+              label="Emotional"
+              selected={style === "Emotional"}
+              onPress={() => setStyle("Emotional")}
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>⏱ Duration</Text>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="15 sec"
+              selected={duration === "15 sec"}
+              onPress={() => setDuration("15 sec")}
+            />
+
+            <OptionButton
+              label="30 sec"
+              selected={duration === "30 sec"}
+              onPress={() => setDuration("30 sec")}
+            />
+
+            <OptionButton
+              label="60 sec"
+              selected={duration === "60 sec"}
+              onPress={() => setDuration("60 sec")}
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>📐 Format</Text>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="9:16"
+              selected={format === "9:16"}
+              onPress={() => setFormat("9:16")}
+            />
+
+            <OptionButton
+              label="1:1"
+              selected={format === "1:1"}
+              onPress={() => setFormat("1:1")}
+            />
+
+            <OptionButton
+              label="16:9"
+              selected={format === "16:9"}
+              onPress={() => setFormat("16:9")}
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>🌐 Language</Text>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="Hindi"
+              selected={language === "Hindi"}
+              onPress={() => setLanguage("Hindi")}
+            />
+
+            <OptionButton
+              label="English"
+              selected={language === "English"}
+              onPress={() => setLanguage("English")}
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>🎙 Voice</Text>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="Male"
+              selected={voice === "Male"}
+              onPress={() => setVoice("Male")}
+            />
+
+            <OptionButton
+              label="Female"
+              selected={voice === "Female"}
+              onPress={() => setVoice("Female")}
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>🎵 Music</Text>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="Emotional"
+              selected={music === "Emotional"}
+              onPress={() => setMusic("Emotional")}
+            />
+
+            <OptionButton
+              label="Inspirational"
+              selected={music === "Inspirational"}
+              onPress={() => setMusic("Inspirational")}
+            />
+          </View>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="Energetic"
+              selected={music === "Energetic"}
+              onPress={() => setMusic("Energetic")}
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>💬 Auto Captions</Text>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="ON"
+              selected={captions}
+              onPress={() => setCaptions(true)}
+            />
+
+            <OptionButton
+              label="OFF"
+              selected={!captions}
+              onPress={() => setCaptions(false)}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.createButton,
+              (!idea.trim() || isGenerating) && styles.disabledButton,
+            ]}
+            onPress={createReel}
+            disabled={!idea.trim() || isGenerating}
+          >
+            {isGenerating ? (
+              <View style={styles.buttonContent}>
+                <ActivityIndicator color="#ffffff" />
+
+                <Text style={styles.buttonText}>
+                  AI Creating Script...
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.buttonText}>✨ Create Reel</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {(isGenerating || completed) && (
+          <View style={styles.progressCard}>
+            <Text style={styles.progressTitle}>
+              {completed
+                ? "🎉 AI Script Is Ready!"
+                : "🎬 Creating Your Reel"}
+            </Text>
+
+            <Text style={styles.progressText}>
+              {completed
+                ? "Gemini generated your reel script."
+                : `${progress}% complete`}
+            </Text>
+
+            <View style={styles.progressBackground}>
+              <View
+                style={[
+                  styles.progressBar,
+                  { width: `${progress}%` },
+                ]}
+              />
+            </View>
+
+            <View style={styles.steps}>
+              <Step
+                icon="📝"
+                title="AI Script"
+                done={progress >= 20}
+              />
+
+              <Step
+                icon="🎵"
+                title="Lyrics & Music"
+                done={false}
+              />
+
+              <Step
+                icon="🎙️"
+                title="AI Voice"
+                done={false}
+              />
+
+              <Step
+                icon="🎥"
+                title="AI Visuals"
+                done={false}
+              />
+
+              <Step
+                icon="💬"
+                title="Auto Captions"
+                done={false}
+              />
+            </View>
+
+            {completed && (
+              <>
+                <View style={styles.scriptCard}>
+                  <Text style={styles.scriptTitle}>
+                    📝 Generated Script
+                  </Text>
+
+                  <Text style={styles.scriptText}>
+                    {generatedScript}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.previewButton}
+                  onPress={openPreview}
+                >
+                  <Text style={styles.previewButtonText}>
+                    🎞️ Open Reel Preview
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        )}
+
+        {!isGenerating && !completed && (
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>
+              🚀 One-Click AI Creation
+            </Text>
+
+            <Text style={styles.infoText}>
+              Choose your settings and press Create Reel. Gemini will
+              generate the reel script automatically.
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function OptionButton({
+  label,
+  selected,
+  onPress,
+}: OptionButtonProps) {
+  return (
+    <TouchableOpacity
+      style={[
+        styles.optionButton,
+        selected && styles.optionButtonSelected,
+      ]}
+      onPress={onPress}
+    >
+      <Text
+        style={[
+          styles.optionText,
+          selected && styles.optionTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function Step({ icon, title, done }: StepProps) {
+  return (
+    <View style={styles.step}>
+      <Text style={styles.stepIcon}>{icon}</Text>
+
+      <Text style={styles.stepTitle}>{title}</Text>
+
+      <Text style={styles.stepStatus}>
+        {done ? "✓" : "○"}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#0b0b0f",
+  },
+
+  content: {
+    padding: 20,
+    paddingBottom: 50,
+  },
+
+  backButton: {
+    marginBottom: 20,
+  },
+
+  backText: {
+    color: "#9b87ff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  title: {
+    color: "#ffffff",
+    fontSize: 30,
+    fontWeight: "bold",
+  },
+
+  subtitle: {
+    color: "#999999",
+    fontSize: 15,
+    marginTop: 6,
+    marginBottom: 25,
+  },
+
+  card: {
+    backgroundColor: "#17171f",
+    borderRadius: 20,
+    padding: 20,
+  },
+
+  sectionTitle: {
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "bold",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+
+  input: {
+    backgroundColor: "#25252f",
+    color: "#ffffff",
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 16,
+    minHeight: 120,
+    textAlignVertical: "top",
+    marginBottom: 12,
+  },
+
+  optionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 8,
+  },
+
+  optionButton: {
+    backgroundColor: "#25252f",
+    borderRadius: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#25252f",
+  },
+
+  optionButtonSelected: {
+    backgroundColor: "#6c4cff",
+    borderColor: "#6c4cff",
+  },
+
+  optionText: {
+    color: "#aaaaaa",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  optionTextSelected: {
+    color: "#ffffff",
+  },
+
+  createButton: {
+    backgroundColor: "#6c4cff",
+    padding: 17,
+    borderRadius: 14,
+    alignItems: "center",
+    marginTop: 20,
+  },
+
+  disabledButton: {
+    opacity: 0.5,
+  },
+
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  buttonText: {
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "bold",
+  },
+
+  progressCard: {
+    backgroundColor: "#17171f",
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 20,
+  },
+
+  progressTitle: {
+    color: "#ffffff",
+    fontSize: 21,
+    fontWeight: "bold",
+  },
+
+  progressText: {
+    color: "#999999",
+    fontSize: 14,
+    marginTop: 7,
+    marginBottom: 15,
+  },
+
+  progressBackground: {
+    height: 8,
+    backgroundColor: "#25252f",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+
+  progressBar: {
+    height: 8,
+    backgroundColor: "#6c4cff",
+    borderRadius: 10,
+  },
+
+  steps: {
+    marginTop: 20,
+  },
+
+  step: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#25252f",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+
+  stepIcon: {
+    fontSize: 23,
+    marginRight: 12,
+  },
+
+  stepTitle: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "600",
+    flex: 1,
+  },
+
+  stepStatus: {
+    color: "#7cff9b",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+
+  scriptCard: {
+    backgroundColor: "#25252f",
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 10,
+  },
+
+  scriptTitle: {
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+
+  scriptText: {
+    color: "#dddddd",
+    fontSize: 15,
+    lineHeight: 23,
+  },
+
+  previewButton: {
+    backgroundColor: "#6c4cff",
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 15,
+  },
+
+  previewButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  infoCard: {
+    backgroundColor: "#17171f",
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 20,
+  },
+
+  infoTitle: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+
+  infoText: {
+    color: "#999999",
+    fontSize: 14,
+    lineHeight: 22,
+  },
+});
