@@ -7,6 +7,12 @@ permissions:
   issues: read
   pull-requests: read
 
+engine: copilot
+
+tools:
+  github:
+    toolsets: [default]
+
 network: defaults
 
 safe-outputs:
@@ -38,7 +44,7 @@ Your job is to inspect the existing repository, identify problems, improve the a
 
 ## Product goal
 
-Develop the AI Reel Maker toward this user flow:
+Develop the AI Reel Maker toward this flow:
 
 Idea / Prompt
 → Reel Options
@@ -50,6 +56,7 @@ Idea / Prompt
 ## Feature priorities
 
 ### Authentication
+
 - Login screen
 - Registration flow
 - Correct navigation
@@ -57,6 +64,7 @@ Idea / Prompt
 - Clear error messages
 
 ### AI Reel Creation
+
 - User idea/prompt input
 - Reel generation request
 - Loading/progress state
@@ -65,6 +73,7 @@ Idea / Prompt
 - Retry handling
 
 ### AI Content
+
 - Script generation
 - Scene planning
 - Auto captions
@@ -73,6 +82,7 @@ Idea / Prompt
 - Video-generation integration point
 
 ### Reel Editor
+
 - Reel preview
 - Scene information
 - Caption display
@@ -80,6 +90,7 @@ Idea / Prompt
 - Regenerate/retry controls
 
 ### UI/UX
+
 - Mobile-first interface
 - Consistent navigation
 - Loading indicators
@@ -111,7 +122,7 @@ After making changes:
 3. Check Expo Router routes.
 4. Check TypeScript files.
 5. Check imports and dependencies.
-6. Run the available lint/type/build checks.
+6. Run available lint/type/build checks.
 7. Fix actual errors instead of hiding them.
 8. Run validation again after fixes.
 
