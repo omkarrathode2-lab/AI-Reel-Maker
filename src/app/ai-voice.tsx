@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
 import {
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,9 +15,11 @@ type InfoBoxProps = {
 
 export default function AIVoiceScreen() {
   const params = useLocalSearchParams();
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const idea = typeof params.idea === "string" ? params.idea : "";
+  const script = typeof params.script === "string" ? params.script : "";
+  const voiceOver =
+    typeof params.voiceOver === "string" ? params.voiceOver : "OFF";
 
   const style =
     typeof params.style === "string"
@@ -56,55 +58,42 @@ export default function AIVoiceScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>
-          Your Reel Is Ready 🎉
+          Review Your Script & Settings
         </Text>
 
         <Text style={styles.subtitle}>
-          Preview your AI-generated reel
+          This repository has script generation; a final video has not been rendered yet.
         </Text>
 
         <View style={styles.reelPreview}>
           <View style={styles.previewOverlay}>
             <Text style={styles.previewTitle}>
-              AI REEL MAKER
+              SCRIPT PREVIEW • NOT A RENDERED VIDEO
             </Text>
 
             <View style={styles.centerContent}>
-              <Text style={styles.studentEmoji}>
-                👨‍💻
+              <Text style={styles.mainText}>
+                Script Preview
               </Text>
 
-              <Text style={styles.mainText}>
-                Dream Big.
-              </Text>
-
-              <Text style={styles.mainText}>
-                Keep Working.
+              <Text style={styles.scriptPreviewText} numberOfLines={5}>
+                {script || "No generated script was passed to this screen."}
               </Text>
 
               <Text style={styles.smallText}>
-                Your dream is possible.
+                Final MP4 not rendered
               </Text>
             </View>
 
-            {captions && (
-              <View style={styles.captionBox}>
-                <Text style={styles.captionText}>
-                  Never stop learning. 🚀
-                </Text>
-              </View>
-            )}
-
-            <TouchableOpacity
-              style={styles.playButton}
-              onPress={() => setIsPlaying(!isPlaying)}
-            >
-              <Text style={styles.playIcon}>
-                {isPlaying ? "Ⅱ" : "▶"}
+            <View style={styles.captionBox}>
+              <Text style={styles.captionText}>
+                {captions
+                  ? "Captions will be generated from actual dialogue/audio after video rendering is connected."
+                  : "Captions are turned off for this project."}
               </Text>
-            </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -112,11 +101,16 @@ export default function AIVoiceScreen() {
           Your Idea
         </Text>
 
-        <Text
-          style={styles.ideaText}
-          numberOfLines={3}
-        >
+        <Text style={styles.ideaText}>
           {idea || "Your reel idea will appear here."}
+        </Text>
+
+        <Text style={styles.ideaLabel}>
+          Generated Script
+        </Text>
+
+        <Text style={styles.ideaText}>
+          {script || "No script available. Go back and generate a script first."}
         </Text>
 
         <View style={styles.infoGrid}>
@@ -149,6 +143,11 @@ export default function AIVoiceScreen() {
             value={music}
             label="Music"
           />
+
+          <InfoBox
+            value={voiceOver}
+            label="Voice-over"
+          />
         </View>
 
         <TouchableOpacity
@@ -168,7 +167,7 @@ export default function AIVoiceScreen() {
             ← Back to Home
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -197,7 +196,7 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
     alignItems: "center",
   },
@@ -256,10 +255,19 @@ const styles = StyleSheet.create({
 
   mainText: {
     color: "#ffffff",
-    fontSize: 25,
+    fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
     marginTop: 4,
+  },
+
+  scriptPreviewText: {
+    color: "#e4e0ff",
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 10,
+    maxHeight: 130,
+    textAlign: "left",
   },
 
   smallText: {
