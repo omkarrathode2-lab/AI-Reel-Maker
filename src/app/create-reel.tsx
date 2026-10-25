@@ -42,7 +42,6 @@ export default function CreateReelScreen() {
   const [voiceOver, setVoiceOver] = useState(false);
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [generatedScript, setGeneratedScript] = useState("");
 
@@ -54,7 +53,6 @@ export default function CreateReelScreen() {
     setIsGenerating(true);
     setCompleted(false);
     setGeneratedScript("");
-    setProgress(10);
 
     const controller = new AbortController();
 
@@ -63,7 +61,6 @@ export default function CreateReelScreen() {
     }, 90000);
 
     try {
-      setProgress(20);
 
       const response = await fetch(
         ownAiServiceUrl(3002, "/api/generate-script"),
@@ -83,7 +80,6 @@ export default function CreateReelScreen() {
         }
       );
 
-      setProgress(80);
 
       let data: {
         success?: boolean;
@@ -112,12 +108,10 @@ export default function CreateReelScreen() {
       }
 
       setGeneratedScript(data.script.trim());
-      setProgress(100);
       setCompleted(true);
     } catch (error) {
       console.error("Create Reel error:", error);
 
-      setProgress(0);
       setCompleted(false);
 
       if (
