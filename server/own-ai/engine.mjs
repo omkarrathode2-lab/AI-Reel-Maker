@@ -75,6 +75,11 @@ app.post("/api/generate-script", async (req, res) => {
       voiceOver = false,
     } = req.body;
 
+    const voiceOverEnabled =
+      voiceOver === true ||
+      (typeof voiceOver === "string" &&
+        ["on", "true", "yes"].includes(voiceOver.trim().toLowerCase()));
+
     if (
       !idea ||
       typeof idea !== "string" ||
@@ -104,7 +109,7 @@ Language:
 ${language}
 
 Narration / voice-over setting:
-${voiceOver ? "ON — narration is allowed when useful." : "OFF — do not write narrator voice-over. Character dialogue is allowed when it naturally belongs in the story."}
+${voiceOverEnabled ? "ON — narration is allowed when useful." : "OFF — do not write narrator voice-over. Character dialogue is allowed when it naturally belongs in the story."}
 
 Writing requirements:
 - Write the entire script in the requested language.
