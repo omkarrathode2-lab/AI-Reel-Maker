@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ownAiServiceUrl } from "@/lib/own-ai-api";
 
 type OptionButtonProps = {
   label: string;
@@ -38,6 +39,7 @@ export default function CreateReelScreen() {
   const [voice, setVoice] = useState("Male");
   const [music, setMusic] = useState("Emotional");
   const [captions, setCaptions] = useState(true);
+  const [voiceOver, setVoiceOver] = useState(false);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -64,7 +66,7 @@ export default function CreateReelScreen() {
       setProgress(20);
 
       const response = await fetch(
-        "http://127.0.0.1:3002/api/generate-script",
+        ownAiServiceUrl(3002, "/api/generate-script"),
         {
           method: "POST",
           headers: {
@@ -75,6 +77,7 @@ export default function CreateReelScreen() {
             style,
             duration,
             language,
+            voiceOver,
           }),
           signal: controller.signal,
         }
@@ -151,6 +154,7 @@ export default function CreateReelScreen() {
         voice,
         music,
         captions: captions ? "ON" : "OFF",
+        voiceOver: voiceOver ? "ON" : "OFF",
         script: generatedScript,
       },
     });
@@ -173,7 +177,7 @@ export default function CreateReelScreen() {
         <Text style={styles.title}>Create New Reel</Text>
 
         <Text style={styles.subtitle}>
-          One idea. One button. Complete AI reel.
+          Start with a story. Generate a script, then continue to video creation.
         </Text>
 
         <View style={styles.card}>
@@ -334,6 +338,23 @@ export default function CreateReelScreen() {
           </View>
 
           <Text style={styles.sectionTitle}>
+            🎙️ Narration / Voice-over
+          </Text>
+
+          <View style={styles.optionRow}>
+            <OptionButton
+              label="OFF (Default)"
+              selected={!voiceOver}
+              onPress={() => setVoiceOver(false)}
+            />
+            <OptionButton
+              label="ON"
+              selected={voiceOver}
+              onPress={() => setVoiceOver(true)}
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>
             💬 Auto Captions
           </Text>
 
@@ -365,12 +386,12 @@ export default function CreateReelScreen() {
                 <ActivityIndicator color="#ffffff" />
 
                 <Text style={styles.buttonText}>
-                  AI Creating Script...
+                  Writing Cinematic Script...
                 </Text>
               </View>
             ) : (
               <Text style={styles.buttonText}>
-                ✨ Create Reel
+                ✨ Generate Script
               </Text>
             )}
           </TouchableOpacity>
@@ -381,31 +402,33 @@ export default function CreateReelScreen() {
             <Text style={styles.progressTitle}>
               {completed
                 ? "🎉 AI Script Is Ready!"
-                : "🎬 Creating Your Reel"}
+                : "🧠 Generating Your Script"}
             </Text>
 
             <Text style={styles.progressText}>
               {completed
-                ? "AI generated your reel script."
-                : `${progress}% complete`}
+                ? "The script is ready. A video has not been rendered yet."
+                : "Waiting for the local AI script engine..."}
             </Text>
 
-            <View style={styles.progressBackground}>
-              <View
-                style={[
-                  styles.progressBar,
-                  {
-                    width: `${progress}%`,
-                  },
-                ]}
-              />
-            </View>
+            {completed && (
+              <View style={styles.progressBackground}>
+                <View
+                  style={[
+                    styles.progressBar,
+                    {
+                      width: "100%",
+                    },
+                  ]}
+                />
+              </View>
+            )}
 
             <View style={styles.steps}>
               <Step
                 icon="📝"
                 title="AI Script"
-                done={progress >= 20}
+                done={completed}
               />
 
               <Step
@@ -450,7 +473,7 @@ export default function CreateReelScreen() {
                   onPress={openPreview}
                 >
                   <Text style={styles.previewButtonText}>
-                    🎞️ Open Reel Preview
+                    📝 Review Script & Settings
                   </Text>
                 </TouchableOpacity>
               </>
