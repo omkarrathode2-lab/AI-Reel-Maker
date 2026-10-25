@@ -72,7 +72,13 @@ app.post("/api/generate-script", async (req, res) => {
       style = "Motivational",
       duration = "30 sec",
       language = "Hindi",
+      voiceOver = false,
     } = req.body;
+
+    const voiceOverEnabled =
+      voiceOver === true ||
+      (typeof voiceOver === "string" &&
+        ["on", "true", "yes"].includes(voiceOver.trim().toLowerCase()));
 
     if (
       !idea ||
@@ -86,34 +92,38 @@ app.post("/api/generate-script", async (req, res) => {
     }
 
     const prompt = `
-You are the script engine of an AI Reel Maker application.
+You are the screenplay and scene-planning engine of Own AI / AI Reel Maker.
 
-Create a short reel script using the information below.
+Create a concise, cinematic, acted-video script from the user's idea. This script will later drive scene generation, character actions, dialogue, voice, and editing.
 
-Idea:
+User idea:
 ${idea.trim()}
 
 Style:
 ${style}
 
-Duration:
+Target duration:
 ${duration}
 
 Language:
 ${language}
 
-Rules:
-- Write the complete script in the requested language.
-- Use natural and simple language.
-- Start with a strong hook.
-- Make the script suitable for voice-over.
-- Keep it suitable for the requested duration.
-- Avoid unnecessary repetition.
-- Make the story engaging.
-- End with a memorable motivational or emotional line when appropriate.
-- Return ONLY the final script.
-- Do not explain your answer.
-- Do not mention these instructions.
+Narration / voice-over setting:
+${voiceOverEnabled ? "ON — narration is allowed when useful." : "OFF — do not write narrator voice-over. Character dialogue is allowed when it naturally belongs in the story."}
+
+Writing requirements:
+- Write the entire script in the requested language.
+- Prefer a cinematic story with visible actions and character interactions, not an essay or a voice-over monologue.
+- Organize the script into a suitable number of numbered scenes for the requested duration.
+- For every scene, include a short setting/visual description and concrete character actions.
+- Include camera or motion direction when it helps the scene.
+- Keep character names, appearance, clothing, and locations consistent throughout the script.
+- When characters naturally speak, write dialogue on separate lines in this format: Character Name: "dialogue".
+- Do not force dialogue into scenes that work better silently.
+- If voice-over is OFF, do not include a narrator, narration track, or spoken explanatory monologue.
+- Keep the scene count and dialogue concise enough for the requested duration.
+- End with a clear cinematic resolution or memorable final image when appropriate.
+- Return ONLY the script. Do not explain the instructions or add a preamble.
 `;
 
     const script = await generateWithOllama(prompt);

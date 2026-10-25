@@ -1,56 +1,65 @@
-# Welcome to your Expo app 👋
+# AI Reel Maker / Own AI
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+AI Reel Maker is a cross-platform Expo application intended to grow into a cinematic AI video creator: script and scene planning, character dialogue, video generation, voice, music, captions, editing, translation, and MP4 export.
 
-## Get started
+## Current verified scope
 
-1. Install dependencies
+This repository currently has a basic local script-generation backend and a reel-settings workflow. The screenplay prompt now requests scene descriptions, visible actions, character dialogue, and camera/motion directions. Voice-over is OFF by default.
 
-   ```bash
-   npm install
-   ```
+**The repository snapshot does not yet contain a working end-to-end video renderer, voice-generation service, music-generation service, audio-aligned captions service, or MP4 export workflow.** The review screen therefore labels itself as a script preview rather than pretending that a finished video has been rendered. See [the implementation roadmap](docs/PRODUCT_ROADMAP.md) for all 24 original feature areas plus the additional AI Movie Maker.
 
-2. Start the app
+## Requirements
 
-   ```bash
-   npx expo start
-   ```
+- Node.js and npm.
+- Ollama running locally with the `qwen3:1.7b` model available for the current script engine.
+- The Expo app and local backend must be able to reach each other.
 
-In the output, you'll find options to open the app in a
+## Run the script backend
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+From the project root:
 
 ```bash
-npm run reset-project
+ollama pull qwen3:1.7b
+node server/own-ai/engine.mjs
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+The script API listens on port `3002` and provides:
 
-### Other setup steps
+- `GET /health`
+- `POST /api/generate-script`
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+The generate-script request accepts `idea`, `style`, `duration`, `language`, and `voiceOver`. The `voiceOver` property can be a boolean; false is the default.
 
-## Learn more
+## Run the Expo app
 
-To learn more about developing your project with Expo, look at the following resources:
+Copy the environment example:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+**Windows PowerShell**
+```powershell
+Copy-Item .env.example .env
+```
 
-## Join the community
+Then start Expo:
 
-Join our community of developers creating universal apps.
+```bash
+npm install
+npx expo start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Expo Web on the same computer defaults to `127.0.0.1`.
+- The Android emulator defaults to `10.0.2.2` to reach the host computer.
+- For a physical Android phone or iPhone, set `EXPO_PUBLIC_OWN_AI_HOST` in `.env` to the **computer's LAN IP address**, not the phone's IP. Keep both devices on the same Wi-Fi, permit the backend port through the local firewall, and restart Expo after changing environment variables.
+- Remote deployments can use the per-service `EXPO_PUBLIC_*_API_BASE_URL` variables in `.env.example`.
+
+The local API URLs are development configuration, not a production security boundary. Do not expose the development backend publicly without appropriate authentication, authorization, HTTPS, and rate limits.
+
+## Product principles
+
+- Preserve the existing project and make incremental changes.
+- Prioritize a real prompt-to-playable-video workflow over placeholder screens.
+- A scene should be regenerated independently where possible; long renders should use checkpoints and resumable jobs.
+- Character dialogue should be distinct from optional narration. Voice-over starts OFF, while dialogue requested by the story may still be generated by a compatible voice engine.
+- Captions must correspond to real dialogue or narration.
+- A job can continue with the laptop shut down only if it is running on an actual remote worker with durable job state and storage. Local jobs stop when the local computer is off.
+- Respect the initial ₹0 budget and clearly disclose free-tier limits; do not promise unlimited free GPU processing.
+
